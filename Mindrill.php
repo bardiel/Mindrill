@@ -17,6 +17,8 @@ class Mindrill
   private $version = '1.0';
   private $suffix = '.json';
 
+  public $lastError; //last error recieved from API
+
   /**
    * API Constructor. If set to test automatically, will return an Exception if the ping API call fails
    *
@@ -86,9 +88,18 @@ class Mindrill
 
     $result = curl_exec($ch);
     curl_close($ch);
-    $decoded = json_decode($result);
+    $decoded = json_decode($result, true, 1024);
 
-    return is_null($decoded) ? $result : $decoded;
+    if(is_null($decoded)) {
+      $this->lastError = array('message' => $result);
+      return false;
+    }
+    if(isset($decoded['status']) && $decoded['status'] == 'error') {
+      $this->lastError = $decoded;
+      return false;
+    }
+
+    return $decoded;
 
   }
 
